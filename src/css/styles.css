@@ -74,6 +74,11 @@ button {
   color: #fff;
 }
 
+button.load-more {
+  width: 125px;
+
+}
+
 button:hover {
   background: #6c8cff;
   cursor: pointer;
@@ -151,7 +156,8 @@ h2 {
   transform: translate(-50%, -50%);
 }
 
-.hidden {
+.hidden,
+.load-more-hidden {
   display: none;
 }
 

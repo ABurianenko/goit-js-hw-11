@@ -1,5 +1,7 @@
 `use strict`
 
+import axios from 'axios';
+
 // Описаний у документації
 import iziToast from "izitoast";
 // Додатковий імпорт стилів
@@ -13,7 +15,7 @@ import "simplelightbox/dist/simple-lightbox.min.css";
 
 
 import { createMarkup } from "./render-functions";
-import { form, list, loader } from "../main";
+import { form, list, loader, loadMore } from "../main";
 
 
 const BASE_URL = "https://pixabay.com/api/";
@@ -30,6 +32,36 @@ function showLoader() {
 
 function hideLoader() {
   loader.classList.add('hidden');
+}
+
+loadMore.addEventListener("click", onLoadMore);
+
+let page = 33;
+let perPage = 15;
+
+async function fetchData (nameSearch="") {
+    const params = new URLSearchParams({
+        key: API_KEY,
+        q: nameSearch,
+        image_type: "photo",
+        orientation: "horizontal",
+        safesearch: true,
+        page,
+        per_page: perPage
+    })
+    
+    const { data } = await axios(`${BASE_URL}?${params}`);
+    
+    return data;
+
+    // return fetch(`${BASE_URL}?${params}`)
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             throw new Error(response.statusText)
+    //         }
+
+    //         return response.json();
+    //     })
 }
 
 export function handleSearch(event) {
@@ -56,8 +88,12 @@ export function handleSearch(event) {
                 hideLoader();
                 return;
             }
-            // console.log("then", data);
+            console.log("then", data);
             list.innerHTML = createMarkup(data.hits);
+
+            if (data.hits.length !== 0 && page * perPage <= data.totalHits) {
+                loadMore.classList.replace("load-more-hidden", "load-more")
+            };
             
             const images = list.querySelectorAll("img");
             const promises = Array.from(images).map(img => {
@@ -72,6 +108,7 @@ export function handleSearch(event) {
                 hideLoader(); 
             });
 
+
         })
         .catch(error => {
         console.log("catch", error);
@@ -84,27 +121,19 @@ export function handleSearch(event) {
       
 }
 
-function fetchData (nameSearch="") {
-    const params = new URLSearchParams({
-        key: API_KEY,
-        q: nameSearch,
-        image_type: "photo",
-        orientation: "horizontal",
-        safesearch: true
-    })
+async function onLoadMore(event) {
+    page += 1;
 
-    // console.log(`${BASE_URL}?${params}`);
-    
-
-    return fetch(`${BASE_URL}?${params}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(response.statusText)
-            }
-
-            return response.json();
-        })
+    try {
+        const data = await fetchData();
+        list.insertAdjacentHTML("beforeend", createMarkup(data.hits))
+        
+    } catch (error) {
+        console.log(error.message)
+    }
 }
+
+
 
 function resetMarkup() {
   list.innerHTML = '';
